@@ -1,0 +1,274 @@
+esphome:
+  name: rabbit-hutch
+
+esp32:
+  board: esp32doit-devkit-v1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  password: "S9l9con!"
+
+ota:
+  password: "S9l9con!"
+
+wifi:
+  ssid: "Poetting 11"
+  password: "TC-5639990"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Rabbit-Hutch Fallback Hotspot"
+    password: "TjQpT9ka3ESn"
+
+captive_portal:
+    
+web_server:
+  port: 80 
+text_sensor:
+  - platform: wifi_info
+    ip_address:
+      name: "Sensor IP address"
+    ssid:
+      name: "Sensor SSID"
+  - platform: version
+    name: "Sensor ESPHome Version"
+
+number:
+  - platform: template
+    id: inhabitants
+    initial_value: 4
+    min_value: -1
+    max_value: 5
+    step: 1
+    optimistic: true
+    on_value:
+      then:
+        - logger.log: value changed
+        - lambda: |-
+            id(rabbit_sensor).publish_state(x);
+    on_value_range:
+      - above: 4.5
+        then:
+          - switch.turn_off: close_ok
+          - logger.log: Error! Manual recount necessary.
+      - below: -0.5
+        then:
+          - switch.turn_off: close_ok
+          - logger.log: Error! Manual recount necessary.
+
+switch:
+# A boolean "switch" to track if it's ok to close the door
+  - platform: template
+    name: "Ok to close the door?"
+    id: close_ok
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+#   internal: true
+
+# switch to track if the door should be closed
+  - platform: template
+    name: "Time to close the door?"
+    id: close_now
+    restore_mode: ALWAYS_OFF
+    optimistic: true
+#   internal: true
+
+  - platform: gpio
+    name: "Hutch Door Open Switch"
+    id: door_open_switch
+    pin: 
+      number: GPIO16
+      mode:
+        input: true
+        pullup: true
+    on_turn_on:
+      - cover.open: hutch_door
+
+  - platform: gpio
+    name: "Hutch Door Close Switch"
+    id: door_close_switch
+    pin: 
+      number: GPIO17
+      mode:
+        input: true
+        pullup: true
+    on_turn_on:
+      - switch.turn_on: close_ok
+      - switch.turn_on: close_now
+      - cover.close: hutch_door
+
+  - platform: gpio
+    name: "Hutch Door Motor Close"
+    id: motor_close
+    pin:
+      number: GPIO33 
+      mode:
+        output
+#   internal: true
+
+  - platform: gpio
+    name: "Hutch Door Motor Open"
+    id: motor_open
+    pin:
+      number: GPIO32 
+      mode:
+        output
+#   internal: true
+
+cover:
+- platform: time_based
+  name: "Rabbit Hutch Door"
+  id: hutch_door
+  open_action:
+    - switch.turn_off: close_now
+    - switch.turn_on: close_ok
+    - switch.turn_on: door_open_switch 
+  open_duration: 10s
+  close_action:  # move logic out of the cover. this has no effect
+    - if:
+        condition:
+          and:
+          - switch.is_on: close_ok
+          - switch.is_on: close_now
+          - number.in_range:
+              id: inhabitants 
+              above: 3.5
+        then:
+          - logger.log: Close hutch door
+          - switch.turn_on: motor_close
+          - switch.turn_off: close_now
+          - number.set:
+              id: inhabitants
+              value: 4
+          - switch.turn_on: close_ok
+        else:
+          if:
+            condition:
+              - switch.is_on: close_now
+                # we wanted the door to close but either the rabbits are no in or we had an error earlier"
+            then:
+              - logger.log: "Error: something went wrong"
+              - switch.turn_off: close_now
+  close_duration: 10s
+  stop_action:
+      - switch.turn_off: motor_close
+      - switch.turn_off: motor_open
+      - switch.turn_off: close_now
+
+i2c:
+  sda: 21
+  scl: 22
+  scan: false
+  id: bus_a
+# frequency: 100kHz
+
+apds9960:
+  address: 0x39
+  update_interval: 60s
+  gesture_led_drive: 50mA
+
+sensor:
+#  - platform: apds9960
+#    type: PROXIMITY
+#    name: "Proximity Channel"
+  - platform: template
+    name: "Rabbits in the Hutch"
+    id: rabbit_sensor
+    lambda: |-
+      {return id(inhabitants).state;}
+
+binary_sensor:
+  - platform: apds9960
+    # Rabbit enters the hutch
+    direction: UP
+    name: "Rabbit has entered the hutch"
+    on_press:
+      - number.increment:
+          id: inhabitants
+          cycle: false
+
+  - platform: apds9960
+    direction: DOWN
+    name: "Rabbit has left the hutch"
+    on_press:
+      - number.decrement:
+          id: inhabitants
+          cycle: false
+time:
+  - platform: sntp
+    id: sntp_time
+    timezone: Europe/Sofia
+    servers:
+     - 0.pool.ntp.org
+     - 1.pool.ntp.org
+     - 2.pool.ntp.org
+    on_time:
+    - seconds: 0
+      minutes: 30
+      hours: 7
+# in the monrning
+      days_of_week: MON-SUN
+      then:
+        - cover.open: hutch_door
+    - seconds: 0
+      minutes: 0
+      hours: 18
+      days_of_week: MON-SUN
+# in the evening
+      then:
+        - switch.turn_on: close_now
+# every minute after that
+    - seconds: 0
+      minutes: /1
+      hours: 18-22
+      days_of_week: MON-SUN
+      then:
+        # try to close the door
+        - cover.close: hutch_door
+# after some time, give up
+    - seconds: 0
+      minutes: 5
+      hours: 22
+      days_of_week: MON-SUN
+      then:
+        if:
+          condition:
+            switch.is_on: close_now
+          then:
+            - logger.log: "Can't close the door because at least one rabbit is missing!"
+
+sun:
+  latitude: 48.09009° 
+  longitude: 11.96109°
+
+  on_sunrise:
+    - then:
+        - logger.log: Open huch door
+        - cover.open: hutch_door
+
+  on_sunset:
+    then:
+      - if:
+          condition:
+            or:
+            - switch.is_on: close_ok
+            - number.in_range:
+                id: inhabitants 
+                above: 3.5
+          then:
+            - logger.log: Close hutch door
+            - cover.open: hutch_door
+          else:
+            - logger.log: "Alarm! Number of rabbits in the hutch is not konwn. Recount rabbits and close manually"
+
+# display:
+#   - platform: lcd_pcf8574
+#     dimensions: 16x2
+#     address: 0x27
+#     lambda: |-
+#       it.print("Hello World!");
