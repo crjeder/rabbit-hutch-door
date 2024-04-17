@@ -1,4 +1,4 @@
-![poster](https://github.com/crjeder/rabbit-hutch-door/blob/plakat.png)
+![poster](https://github.com/crjeder/rabbit-hutch-door/blob/main/plakat.png)
 # rabbit-hutch-door
 automated rabbit hutch door with esphome
 [see my project at hackaday](https://hackaday.io/project/194924-automated-rabbit-hutch-door)
