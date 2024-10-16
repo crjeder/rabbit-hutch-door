@@ -38,6 +38,12 @@ text_sensor:
   - platform: version
     name: "Sensor ESPHome Version"
 
+# state machine implementation
+external_components:
+  - source:
+      type: git
+      url: https://github.com/muxa/esphome-state-machine
+
 number:
   - platform: template
     id: inhabitants
@@ -61,23 +67,66 @@ number:
           - switch.turn_off: close_ok
           - logger.log: Error! Manual recount necessary.
 
+state_machine:
+  - name: Rabit hutch as state machine
+    id: huch_state
+    states:
+      - "CLOSED"
+      - "OPEN"
+      - "WAITING"
+      - "ERROR"
+    inputs:
+      - name: MANUAL_OPEN
+        transitions:
+          - CLOSED -> OPEN
+            - on_transition: 
+                - cover.open: hutch_door
+      - name: MANUAL_CLOSE
+        transitions:
+          - ERROR -> CLOSED
+            - on_transition: 
+                - number.set: 
+                  id: nr_inhabitants 
+                  value: !lambda return id(nr_rabits).state
+                - cover.close: huch_door
+          - OPEN -> CLOSED
+            - on_transition: 
+                - number.set: 
+                  id: nr_inhabitants 
+                  value: !lambda return id(nr_rabits).state
+                - cover.close: huch_door
+      - name: TIME_CLOSE
+        transitions:
+          - OPEN -> WAITING
+      - name: TIME_OPEN
+        transitions:
+          - CLOSED -> OPEN
+      - name: ENTER
+        transitions:
+          - OPEN -> OPEN
+            - on_transition: 
+              - number.increment:
+                id: inhabitants
+                cycle: false
+          - WAITING -> WAITING
+            - on_transition: 
+              - number.increment:
+                id: inhabitants
+                cycle: false
+      - name: EXIT
+        transitions:
+          - OPEN -> OPEN
+            - on_transition: 
+              - number.decrement:
+                id: inhabitants
+                cycle: false
+          - WAITING -> WAITING
+            - on_transition: 
+              - number.decrement:
+                id: inhabitants
+                cycle: false
+
 switch:
-# A boolean "switch" to track if it's ok to close the door
-  - platform: template
-    name: "Ok to close the door?"
-    id: close_ok
-    optimistic: true
-    restore_mode: RESTORE_DEFAULT_ON
-#   internal: true
-
-# switch to track if the door should be closed
-  - platform: template
-    name: "Time to close the door?"
-    id: close_now
-    restore_mode: ALWAYS_OFF
-    optimistic: true
-#   internal: true
-
   - platform: gpio
     name: "Hutch Door Open Switch"
     id: door_open_switch
@@ -87,7 +136,7 @@ switch:
         input: true
         pullup: true
     on_turn_on:
-      - cover.open: hutch_door
+      - state_machine.transition: MANUAL_OPEN
 
   - platform: gpio
     name: "Hutch Door Close Switch"
@@ -98,67 +147,33 @@ switch:
         input: true
         pullup: true
     on_turn_on:
-      - switch.turn_on: close_ok
-      - switch.turn_on: close_now
-      - cover.close: hutch_door
+      - state_machine.transition: MANUAL_CLOSE
 
+output:
   - platform: gpio
     name: "Hutch Door Motor Close"
     id: motor_close
-    pin:
-      number: GPIO33 
-      mode:
-        output
-#   internal: true
+    pin: GPIO33 
 
   - platform: gpio
     name: "Hutch Door Motor Open"
     id: motor_open
-    pin:
-      number: GPIO32 
-      mode:
-        output
-#   internal: true
+    pin: GPIO32 
 
 cover:
 - platform: time_based
   name: "Rabbit Hutch Door"
   id: hutch_door
   open_action:
-    - switch.turn_off: close_now
-    - switch.turn_on: close_ok
-    - switch.turn_on: door_open_switch 
+    - output.turn_on: motor_open 
   open_duration: 10s
-  close_action:  # move logic out of the cover. this has no effect
-    - if:
-        condition:
-          and:
-          - switch.is_on: close_ok
-          - switch.is_on: close_now
-          - number.in_range:
-              id: inhabitants 
-              above: 3.5
-        then:
-          - logger.log: Close hutch door
-          - switch.turn_on: motor_close
-          - switch.turn_off: close_now
-          - number.set:
-              id: inhabitants
-              value: 4
-          - switch.turn_on: close_ok
-        else:
-          if:
-            condition:
-              - switch.is_on: close_now
-                # we wanted the door to close but either the rabbits are no in or we had an error earlier"
-            then:
-              - logger.log: "Error: something went wrong"
-              - switch.turn_off: close_now
+  close_action: 
+    - output.turn_on: motor_close 
   close_duration: 10s
   stop_action:
-      - switch.turn_off: motor_close
-      - switch.turn_off: motor_open
-      - switch.turn_off: close_now
+      - output.turn_off: motor_close
+      - output.turn_off: motor_open
+
 
 i2c:
   sda: 21
@@ -173,6 +188,12 @@ apds9960:
   gesture_led_drive: 50mA
 
 sensor:
+  - platform: template
+    name: "Number of rabits"
+    id: nr_rabits
+    lambda: |-
+        return 4; # your constant value here
+
 #  - platform: apds9960
 #    type: PROXIMITY
 #    name: "Proximity Channel"
@@ -199,6 +220,7 @@ binary_sensor:
       - number.decrement:
           id: inhabitants
           cycle: false
+
 time:
   - platform: sntp
     id: sntp_time
@@ -222,25 +244,6 @@ time:
 # in the evening
       then:
         - switch.turn_on: close_now
-# every minute after that
-    - seconds: 0
-      minutes: /1
-      hours: 18-22
-      days_of_week: MON-SUN
-      then:
-        # try to close the door
-        - cover.close: hutch_door
-# after some time, give up
-    - seconds: 0
-      minutes: 5
-      hours: 22
-      days_of_week: MON-SUN
-      then:
-        if:
-          condition:
-            switch.is_on: close_now
-          then:
-            - logger.log: "Can't close the door because at least one rabbit is missing!"
 
 sun:
   latitude: 48.09009° 
