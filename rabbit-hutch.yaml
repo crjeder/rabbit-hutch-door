@@ -113,7 +113,7 @@ state_machine:
                 id: nr_inhabitants
                 cycle: false
               - then:
-                - if 
+                - if:
                   condition:
                     lambda: 'return id(nr_inhabitants).state = it(nr_rabits).state;'
                   then:
