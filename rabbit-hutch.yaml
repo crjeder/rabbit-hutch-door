@@ -48,7 +48,7 @@ globals:
   - id: nr_rabits
     type: float
     restore_value: no
-    initial_value: 4.0 
+    initial_value: '4.0 '
     
 number:
   - platform: template
