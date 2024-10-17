@@ -63,7 +63,7 @@ number:
       then:
         - logger.log: value changed
         - if:
-          condition: !lamda |-
+          condition: !lambda |-
             return (x > float(id.nr_rabits.state) || x < 0);
           then:
             - state_machine.transition: ERROR
