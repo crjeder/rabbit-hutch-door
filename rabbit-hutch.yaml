@@ -57,7 +57,7 @@ number:
         - logger.log: value changed
         - if:
             condition: 
-              lambda: 'return (x > 4.0 || x < 0);
+              lambda: 'return (x > 4.0 || x < 0);'
             then:
               - state_machine.transition: ERROR
          
@@ -110,7 +110,7 @@ state_machine:
               - then:
                 - if:
                   condition:
-                    lambda: 'return id(nr_inhabitants).state = 4.0;'
+                    lambda: 'return id(nr_inhabitants).state == 4.0;'
                   then:
                     - state_machine.transition: CLOSE
       - name: CLOSE
