@@ -44,30 +44,30 @@ external_components:
       type: git
       url: https://github.com/muxa/esphome-state-machine
 
+globals:
+  - id: nr_rabits
+    type: float
+    restore_value: no
+    initial_value: 4.0 
+    
 number:
   - platform: template
     id: nr_inhabitants
-    initial_value: !lambda |-
-      return 4.0; # float(id(nr_rabbits).state);
-    min_value: -1.0
-    max_value: !lambda |-
-      return id(nr_rabbits).state + 1.0;
-    step: 1
+    initial_value: nr_rabits
+    # min_value: -1.0
+    # max_value: !lambda |-
+    #  return id(nr_rabbits).state + 1.0;
+    step: 1.0
     optimistic: true
     on_value:
       then:
         - logger.log: value changed
-    on_value_range:
-      - above: !lambda |-
-          return id(nr_rabbit)state + 0.5;
-        then:
-          - state_machine.transition: ERROR
-          - logger.log: Overflow Error! Manual recount necessary.
-      - below: -0.5
-        then:
-          - state_machine.transition: ERROR
-          - logger.log: Underflow Error! Manual recount necessary.
-
+        - if:
+          condition: !lamda |-
+            return (x > float(id.nr_rabits.state) || x < 0);
+          then:
+            - state_machine.transition: ERROR
+         
 state_machine:
   - name: Rabit hutch as state machine
     id: huch_state
