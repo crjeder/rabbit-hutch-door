@@ -49,9 +49,9 @@ number:
     id: nr_inhabitants
     initial_value: |-
             id(nr_rabbits).state;
-    min_value: -1
+    min_value: -1.0
     max_value: |-
-            id(nr_rabbits).state + 1;
+            id(nr_rabbits).state + 1.0;
     step: 1
     optimistic: true
     on_value:
@@ -206,7 +206,7 @@ sensor:
     name: "Number of rabits"
     id: nr_rabits
     lambda: |-
-        return 4; # your constant value here
+        return 4.0; # your constant value here
 
   - platform: template
     name: "Rabbits in the Hutch"
@@ -242,22 +242,6 @@ time:
      - 0.pool.ntp.org
      - 1.pool.ntp.org
      - 2.pool.ntp.org
-    on_time:
-    - seconds: 0
-      minutes: 30
-      hours: 7
-# in the monrning
-      days_of_week: MON-SUN
-      then:
-        - cover.open: hutch_door
-    - seconds: 0
-      minutes: 0
-      hours: 18
-      days_of_week: MON-SUN
-# in the evening
-      then:
-        - switch.turn_on: close_now
-
 sun:
   latitude: 48.09009° 
   longitude: 11.96109°
