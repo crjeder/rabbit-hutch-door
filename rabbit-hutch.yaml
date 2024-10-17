@@ -80,8 +80,8 @@ state_machine:
       - name: MANUAL_OPEN
         transitions:
           - CLOSED -> OPEN
-            - on_transition: 
-                - cover.open: hutch_door
+        on_input: 
+          - cover.open: hutch_door
       - name: MANUAL_CLOSE
         transitions:
           - ERROR -> CLOSED
