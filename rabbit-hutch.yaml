@@ -48,10 +48,10 @@ number:
   - platform: template
     id: nr_inhabitants
     initial_value: !lambda |-
-            id(nr_rabbits).state;
+      return id(nr_rabbits).state;
     min_value: -1.0
     max_value: !lambda |-
-            id(nr_rabbits).state + 1.0;
+      return id(nr_rabbits).state + 1.0;
     step: 1
     optimistic: true
     on_value:
@@ -59,7 +59,7 @@ number:
         - logger.log: value changed
     on_value_range:
       - above: !lambda |-
-            id(nr_rabbit)state + 0.5;
+          return id(nr_rabbit)state + 0.5;
         then:
           - state_machine.transition: ERROR
           - logger.log: Overflow Error! Manual recount necessary.
