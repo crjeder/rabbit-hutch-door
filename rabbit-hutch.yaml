@@ -103,12 +103,12 @@ state_machine:
       - name: ENTER
         transitions:
           - OPEN -> OPEN
-            on_transition: 
+          - on_transition: 
               - number.increment:
                 id: nr_inhabitants
                 cycle: false
           - WAITING -> WAITING
-            on_transition: 
+          - on_transition: 
               - number.increment:
                 id: nr_inhabitants
                 cycle: false
