@@ -11,19 +11,19 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: "S9l9con!"
+  password: "**"
 
 ota:
-  password: "S9l9con!"
+  password: "**!"
 
 wifi:
-  ssid: "Poetting 11"
-  password: "TC-5639990"
+  ssid: "**"
+  password: "**"
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Rabbit-Hutch Fallback Hotspot"
-    password: "TjQpT9ka3ESn"
+    password: "**"
 
 captive_portal:
     
@@ -46,25 +46,26 @@ external_components:
 
 number:
   - platform: template
-    id: inhabitants
-    initial_value: 4
+    id: nr_inhabitants
+    initial_value: |-
+            id(nr_rabbits).state;
     min_value: -1
-    max_value: 5
+    max_value: |-
+            id(nr_rabbits).state + 1;
     step: 1
     optimistic: true
     on_value:
       then:
         - logger.log: value changed
-        - lambda: |-
-            id(rabbit_sensor).publish_state(x);
     on_value_range:
-      - above: 4.5
+      - above: |-
+            id(nr_rabbit)state + 0.5;
         then:
-          - switch.turn_off: close_ok
+          - state_machine.transition: ERROR
           - logger.log: Error! Manual recount necessary.
       - below: -0.5
         then:
-          - switch.turn_off: close_ok
+          - state_machine.transition: ERROR
           - logger.log: Error! Manual recount necessary.
 
 state_machine:
@@ -87,13 +88,15 @@ state_machine:
             - on_transition: 
                 - number.set: 
                   id: nr_inhabitants 
-                  value: !lambda return id(nr_rabits).state
+                  value: !lambda |-
+                     return id(nr_rabits).state;
                 - cover.close: huch_door
           - OPEN -> CLOSED
             - on_transition: 
                 - number.set: 
                   id: nr_inhabitants 
-                  value: !lambda return id(nr_rabits).state
+                  value: !lambda |- 
+                     return id(nr_rabits).state;
                 - cover.close: huch_door
       - name: TIME_CLOSE
         transitions:
@@ -101,18 +104,34 @@ state_machine:
       - name: TIME_OPEN
         transitions:
           - CLOSED -> OPEN
+          - on_transition: 
+            - cover.open: hutch_door
       - name: ENTER
         transitions:
           - OPEN -> OPEN
             - on_transition: 
               - number.increment:
-                id: inhabitants
+                id: nr_inhabitants
                 cycle: false
           - WAITING -> WAITING
             - on_transition: 
               - number.increment:
-                id: inhabitants
+                id: nr_inhabitants
                 cycle: false
+              - if 
+                condition:
+                  lambda: 'return id(nr_inhabitants).state = it(nr_rabits).state;'
+                then:
+                  - state_machine.transition: CLOSE
+      - name: CLOSE
+        transitions:
+          - WAITING -> CLOSED
+            - on_transition:
+              - number.set: 
+                  id: nr_inhabitants 
+                  value: !lambda |- 
+                     return id(nr_rabits).state;
+                - cover.close: huch_door
       - name: EXIT
         transitions:
           - OPEN -> OPEN
@@ -125,7 +144,7 @@ state_machine:
               - number.decrement:
                 id: inhabitants
                 cycle: false
-
+                
 switch:
   - platform: gpio
     name: "Hutch Door Open Switch"
@@ -194,9 +213,6 @@ sensor:
     lambda: |-
         return 4; # your constant value here
 
-#  - platform: apds9960
-#    type: PROXIMITY
-#    name: "Proximity Channel"
   - platform: template
     name: "Rabbits in the Hutch"
     id: rabbit_sensor
@@ -212,6 +228,7 @@ binary_sensor:
       - number.increment:
           id: inhabitants
           cycle: false
+      - state_machine.transition: ENTER
 
   - platform: apds9960
     direction: DOWN
@@ -220,6 +237,7 @@ binary_sensor:
       - number.decrement:
           id: inhabitants
           cycle: false
+      - state_machine.transition: EXIT
 
 time:
   - platform: sntp
@@ -251,23 +269,13 @@ sun:
 
   on_sunrise:
     - then:
-        - logger.log: Open huch door
-        - cover.open: hutch_door
+        - logger.log: Good morning! I'll open the huch door!
+        - state_machine.transition: TIME_OPEN
 
   on_sunset:
     then:
-      - if:
-          condition:
-            or:
-            - switch.is_on: close_ok
-            - number.in_range:
-                id: inhabitants 
-                above: 3.5
-          then:
-            - logger.log: Close hutch door
-            - cover.open: hutch_door
-          else:
-            - logger.log: "Alarm! Number of rabbits in the hutch is not konwn. Recount rabbits and close manually"
+      - logger.log: Good evening! I'll close the huch door!
+      - state_machine.transition: TIME_CLOSE
 
 # display:
 #   - platform: lcd_pcf8574
