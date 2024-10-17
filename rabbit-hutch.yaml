@@ -47,10 +47,10 @@ external_components:
 number:
   - platform: template
     id: nr_inhabitants
-    initial_value: |-
+    initial_value: !lambda |-
             id(nr_rabbits).state;
     min_value: -1.0
-    max_value: |-
+    max_value: !lambda |-
             id(nr_rabbits).state + 1.0;
     step: 1
     optimistic: true
@@ -58,7 +58,7 @@ number:
       then:
         - logger.log: value changed
     on_value_range:
-      - above: |-
+      - above: !lambda |-
             id(nr_rabbit)state + 0.5;
         then:
           - state_machine.transition: ERROR
