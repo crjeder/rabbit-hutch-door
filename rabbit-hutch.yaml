@@ -85,36 +85,30 @@ state_machine:
       - name: MANUAL_CLOSE
         transitions:
           - ERROR -> CLOSED
-            - on_transition: 
-                - number.set: 
-                  id: nr_inhabitants 
-                  value: !lambda |-
-                     return id(nr_rabits).state;
-                - cover.close: huch_door
           - OPEN -> CLOSED
-            - on_transition: 
-                - number.set: 
-                  id: nr_inhabitants 
-                  value: !lambda |- 
-                     return id(nr_rabits).state;
-                - cover.close: huch_door
+        on_input: 
+          - number.set: 
+            id: nr_inhabitants 
+            value: !lambda |- 
+              return id(nr_rabits).state;
+          - cover.close: huch_door
       - name: TIME_CLOSE
         transitions:
           - OPEN -> WAITING
       - name: TIME_OPEN
         transitions:
           - CLOSED -> OPEN
-          - on_transition: 
-            - cover.open: hutch_door
+        on_input: 
+          - cover.open: hutch_door
       - name: ENTER
         transitions:
           - OPEN -> OPEN
-            - on_transition: 
+            on_transition: 
               - number.increment:
                 id: nr_inhabitants
                 cycle: false
           - WAITING -> WAITING
-            - on_transition: 
+            on_transition: 
               - number.increment:
                 id: nr_inhabitants
                 cycle: false
@@ -126,24 +120,20 @@ state_machine:
       - name: CLOSE
         transitions:
           - WAITING -> CLOSED
-            - on_transition:
-              - number.set: 
-                  id: nr_inhabitants 
-                  value: !lambda |- 
-                     return id(nr_rabits).state;
-                - cover.close: huch_door
+        on_input:
+          - number.set: 
+            id: nr_inhabitants 
+            value: !lambda |- 
+              return id(nr_rabits).state;
+          - cover.close: huch_door
       - name: EXIT
         transitions:
           - OPEN -> OPEN
-            - on_transition: 
-              - number.decrement:
-                id: inhabitants
-                cycle: false
           - WAITING -> WAITING
-            - on_transition: 
-              - number.decrement:
-                id: inhabitants
-                cycle: false
+        on_imput: 
+          - number.decrement:
+            id: inhabitants
+            cycle: false
                 
 switch:
   - platform: gpio
