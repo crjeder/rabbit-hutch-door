@@ -48,7 +48,7 @@ number:
   - platform: template
     id: nr_inhabitants
     initial_value: !lambda |-
-      return float(id(nr_rabbits).state);
+      return 4.0; # float(id(nr_rabbits).state);
     min_value: -1.0
     max_value: !lambda |-
       return id(nr_rabbits).state + 1.0;
