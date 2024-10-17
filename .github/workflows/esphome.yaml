@@ -1,3 +1,15 @@
-uses: esphome/build-action@v4.0.2
-with:
-  yaml-file: '**/rabbit-hutch.yaml'
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths: 
+      - '**/rabbit-hutch.yaml'
+
+jobs:
+  build:
+    uses: esphome/workflows/.github/workflows/publish.yml@main
+    with:
+      files: rabbit-hutch.yaml
+      name: Rabbit Hutch
