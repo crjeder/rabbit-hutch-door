@@ -13,8 +13,8 @@ logger:
 api:
   password: "**"
 
-ota:
-  password: "**!"
+# ota:
+#  password: "**!"
 
 wifi:
   ssid: "**"
@@ -62,11 +62,11 @@ number:
             id(nr_rabbit)state + 0.5;
         then:
           - state_machine.transition: ERROR
-          - logger.log: Error! Manual recount necessary.
+          - logger.log: Overflow Error! Manual recount necessary.
       - below: -0.5
         then:
           - state_machine.transition: ERROR
-          - logger.log: Error! Manual recount necessary.
+          - logger.log: Underflow Error! Manual recount necessary.
 
 state_machine:
   - name: Rabit hutch as state machine
@@ -82,6 +82,7 @@ state_machine:
           - CLOSED -> OPEN
         on_input: 
           - cover.open: hutch_door
+          - logger.log: Manual open
       - name: MANUAL_CLOSE
         transitions:
           - ERROR -> CLOSED
@@ -92,6 +93,7 @@ state_machine:
             value: !lambda |- 
               return id(nr_rabits).state;
           - cover.close: huch_door
+          - logger.log: Manual close
       - name: TIME_CLOSE
         transitions:
           - OPEN -> WAITING
@@ -100,6 +102,7 @@ state_machine:
           - CLOSED -> OPEN
         on_input: 
           - cover.open: hutch_door
+          - logger.log: Time open
       - name: ENTER
         transitions:
           - OPEN -> OPEN
@@ -127,6 +130,7 @@ state_machine:
             value: !lambda |- 
               return id(nr_rabits).state;
           - cover.close: huch_door
+          - logger.log: All in! Closing
       - name: EXIT
         transitions:
           - OPEN -> OPEN
@@ -183,7 +187,7 @@ cover:
   stop_action:
       - output.turn_off: motor_close
       - output.turn_off: motor_open
-
+      - state_machine.transition: ERROR
 
 i2c:
   sda: 21
