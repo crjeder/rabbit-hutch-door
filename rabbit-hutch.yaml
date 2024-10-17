@@ -112,11 +112,12 @@ state_machine:
               - number.increment:
                 id: nr_inhabitants
                 cycle: false
-              - if 
-                condition:
-                  lambda: 'return id(nr_inhabitants).state = it(nr_rabits).state;'
-                then:
-                  - state_machine.transition: CLOSE
+              - then:
+                - if 
+                  condition:
+                    lambda: 'return id(nr_inhabitants).state = it(nr_rabits).state;'
+                  then:
+                    - state_machine.transition: CLOSE
       - name: CLOSE
         transitions:
           - WAITING -> CLOSED
