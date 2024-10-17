@@ -11,19 +11,19 @@ logger:
 
 # Enable Home Assistant API
 api:
-  password: "**"
+  password: "12345678"
 
 # ota:
-#  password: "**!"
+#  password: "12345678"
 
 wifi:
-  ssid: "**"
-  password: "**"
+  ssid: "12345678"
+  password: "12345678"
 
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Rabbit-Hutch Fallback Hotspot"
-    password: "**"
+    password: "12345678"
 
 captive_portal:
     
