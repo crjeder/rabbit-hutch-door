@@ -43,20 +43,13 @@ external_components:
   - source:
       type: git
       url: https://github.com/muxa/esphome-state-machine
-
-globals:
-  - id: nr_rabits
-    type: float
-    restore_value: no
-    initial_value: '4.0 '
     
 number:
   - platform: template
     id: nr_inhabitants
-    initial_value: 4
+    initial_value: 4.0
     min_value: 0.0
-    # max_value: !lambda |-
-    #  return id(nr_rabbits).state + 1.0;
+    max_value: 4.0
     step: 1.0
     optimistic: true
     on_value:
@@ -64,7 +57,7 @@ number:
         - logger.log: value changed
         - if:
             condition: !lambda |-
-              return (x > float(id.nr_rabits.state) || x < 0);
+              return (x > 4.0 || x < 0);
             then:
               - state_machine.transition: ERROR
          
@@ -90,8 +83,7 @@ state_machine:
         on_input: 
           - number.set: 
             id: nr_inhabitants 
-            value: !lambda |- 
-              return id(nr_rabits).state;
+            value: 4.0
           - cover.close: huch_door
           - logger.log: Manual close
       - name: TIME_CLOSE
@@ -118,7 +110,7 @@ state_machine:
               - then:
                 - if:
                   condition:
-                    lambda: 'return id(nr_inhabitants).state = it(nr_rabits).state;'
+                    lambda: 'return id(nr_inhabitants).state = 4.0;'
                   then:
                     - state_machine.transition: CLOSE
       - name: CLOSE
@@ -127,8 +119,7 @@ state_machine:
         on_input:
           - number.set: 
             id: nr_inhabitants 
-            value: !lambda |- 
-              return id(nr_rabits).state;
+            value: 4.0
           - cover.close: huch_door
           - logger.log: All in! Closing
       - name: EXIT
@@ -202,27 +193,15 @@ apds9960:
   gesture_led_drive: 50mA
 
 sensor:
-  - platform: template
-    name: "Number of rabits"
-    id: nr_rabits
-    lambda: |-
-        return 4.0; # your constant value here
-
-  - platform: template
-    name: "Rabbits in the Hutch"
-    id: rabbit_sensor
-    lambda: |-
-      {return id(inhabitants).state;}
-
-binary_sensor:
+  binary_sensor:
   - platform: apds9960
     # Rabbit enters the hutch
     direction: UP
     name: "Rabbit has entered the hutch"
     on_press:
       - number.increment:
-          id: inhabitants
-          cycle: false
+        id: inhabitants
+        cycle: false
       - state_machine.transition: ENTER
 
   - platform: apds9960
@@ -230,8 +209,8 @@ binary_sensor:
     name: "Rabbit has left the hutch"
     on_press:
       - number.decrement:
-          id: inhabitants
-          cycle: false
+        id: inhabitants
+        cycle: false
       - state_machine.transition: EXIT
 
 time:
@@ -248,17 +227,10 @@ sun:
 
   on_sunrise:
     - then:
-        - logger.log: Good morning! I'll open the huch door!
-        - state_machine.transition: TIME_OPEN
+      - logger.log: Good morning! I'll open the huch door!
+      - state_machine.transition: TIME_OPEN
 
   on_sunset:
     then:
       - logger.log: Good evening! I'll close the huch door!
       - state_machine.transition: TIME_CLOSE
-
-# display:
-#   - platform: lcd_pcf8574
-#     dimensions: 16x2
-#     address: 0x27
-#     lambda: |-
-#       it.print("Hello World!");
