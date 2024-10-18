@@ -110,8 +110,7 @@ state_machine:
               - number.increment:
                   id: nr_inhabitants
                   cycle: false
-              - then:
-                - if:
+              - if:
                   condition:
                     lambda: 'return id(nr_inhabitants).state == 4.0;'
                   then:
