@@ -118,7 +118,7 @@ state_machine:
           - WAITING -> CLOSED
         on_input:
           - number.set: 
-              id nr_inhabitants 
+              id: nr_inhabitants 
               value: 4.0
           - cover.close: huch_door
           - logger.log: All in! Closing
