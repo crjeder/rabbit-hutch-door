@@ -128,7 +128,7 @@ state_machine:
         transitions:
           - OPEN -> OPEN
           - WAITING -> WAITING
-        on_imput: 
+        on_input: 
           - number.decrement:
               id: inhabitants
               cycle: false
