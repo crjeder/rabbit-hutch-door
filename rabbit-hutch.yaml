@@ -80,6 +80,7 @@ state_machine:
         transitions:
           - ERROR -> CLOSED
           - OPEN -> CLOSED
+          - WAITING -> CLOSED
         on_input: 
           - number.set: 
               id: nr_inhabitants 
@@ -97,13 +98,15 @@ state_machine:
           - logger.log: Time open
       - name: ENTER
         transitions:
-          - OPEN -> OPEN
-          - on_transition: 
+          - from: OPEN
+            to: OPEN
+            on_transition: 
               - number.increment:
                   id: nr_inhabitants
                   cycle: false
-          - WAITING -> WAITING
-          - on_transition: 
+          - from: WAITING 
+            to: WAITING
+            on_transition: 
               - number.increment:
                   id: nr_inhabitants
                   cycle: false
@@ -225,11 +228,23 @@ sun:
   longitude: 11.96109°
 
   on_sunrise:
-    - then:
-      - logger.log: Good morning! I'll open the huch door!
-      - state_machine.transition: TIME_OPEN
+    - elevation: 5°
+      then:
+        - logger.log: Good morning! I'll open the huch door!
+        - state_machine.transition: TIME_OPEN
 
   on_sunset:
-    then:
-      - logger.log: Good evening! I'll close the huch door!
-      - state_machine.transition: TIME_CLOSE
+    - elevation: 5°
+      then:
+        - logger.log: Good evening! I'll close the huch door!
+        - state_machine.transition: TIME_CLOSE
+    - elevation: 0°
+      then:
+        - if:
+            condition:
+              state_machine.state:
+                value: "WAITING"
+                value: "ERROR"
+          then:
+            - logger.log: "Danger! Rabits are not in the hutch at dawn!"
+            - state_machine.transition: ERROR
