@@ -82,8 +82,8 @@ state_machine:
           - OPEN -> CLOSED
         on_input: 
           - number.set: 
-            id: nr_inhabitants 
-            value: 4.0
+              id: nr_inhabitants 
+              value: 4.0
           - cover.close: huch_door
           - logger.log: Manual close
       - name: TIME_CLOSE
@@ -100,13 +100,13 @@ state_machine:
           - OPEN -> OPEN
           - on_transition: 
               - number.increment:
-                id: nr_inhabitants
-                cycle: false
+                  id: nr_inhabitants
+                  cycle: false
           - WAITING -> WAITING
           - on_transition: 
               - number.increment:
-                id: nr_inhabitants
-                cycle: false
+                  id: nr_inhabitants
+                  cycle: false
               - then:
                 - if:
                   condition:
@@ -128,8 +128,8 @@ state_machine:
           - WAITING -> WAITING
         on_imput: 
           - number.decrement:
-            id: inhabitants
-            cycle: false
+              id: inhabitants
+              cycle: false
                 
 switch:
   - platform: gpio
@@ -199,8 +199,8 @@ binary_sensor:
     name: "Rabbit has entered the hutch"
     on_press:
       - number.increment:
-        id: inhabitants
-        cycle: false
+          id: inhabitants
+          cycle: false
       - state_machine.transition: ENTER
 
   - platform: apds9960
