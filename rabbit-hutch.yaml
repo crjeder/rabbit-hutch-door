@@ -208,8 +208,8 @@ binary_sensor:
     name: "Rabbit has left the hutch"
     on_press:
       - number.decrement:
-        id: inhabitants
-        cycle: false
+          id: inhabitants
+          cycle: false
       - state_machine.transition: EXIT
 
 time:
