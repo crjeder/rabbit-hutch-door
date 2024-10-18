@@ -236,18 +236,17 @@ sun:
         - logger.log: Good evening! I'll close the huch door!
         - state_machine.transition: TIME_CLOSE
     - elevation: 0°
-      then:
-        - if:
+      if:
+        condition:
+          state_machine.state:
+            value: "WAITING"
+        then:
+          - logger.log: "Danger! Rabits are not in the hutch at dawn!"
+          - state_machine.transition: ERROR
+        else:
+          - if:
             condition:
               state_machine.state:
-                value: "WAITING"
-          then:
-            - logger.log: "Danger! Rabits are not in the hutch at dawn!"
-            - state_machine.transition: ERROR
-          else:
-            - if:
-              condition:
-                state_machine.state:
-                  value: "Error"
-              then:
-                - logger.log: "Danger! Hutch still in error state. Check immediately"
+                value: "Error"
+            then:
+              - logger.log: "Danger! Hutch still in error state. Check immediately"
