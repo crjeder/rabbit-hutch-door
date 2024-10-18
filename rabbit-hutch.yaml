@@ -158,12 +158,10 @@ switch:
 
 output:
   - platform: gpio
-    name: "Hutch Door Motor Close"
     id: motor_close
     pin: GPIO33 
 
   - platform: gpio
-    name: "Hutch Door Motor Open"
     id: motor_open
     pin: GPIO32 
 
