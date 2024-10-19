@@ -235,4 +235,4 @@ sun:
           condition:
             state_machine.state: "Error"
           then:
-            - logger.log Danger! Hutch still in error state. Check immediately
+            - logger.log: Danger! Hutch still in error state. Check immediately
