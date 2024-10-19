@@ -63,7 +63,7 @@ number:
          
 state_machine:
   - name: Rabit hutch as state machine
-    id: huch_state
+    id: hutch_state
     states:
       - "CLOSED"
       - "OPEN"
@@ -85,7 +85,7 @@ state_machine:
           - number.set: 
               id: nr_inhabitants 
               value: 4.0
-          - cover.close: huch_door
+          - cover.close: hutch_door
           - logger.log: Manual close
       - name: TIME_CLOSE
         transitions:
@@ -122,7 +122,7 @@ state_machine:
           - number.set: 
               id: nr_inhabitants 
               value: 4.0
-          - cover.close: huch_door
+          - cover.close: hutch_door
           - logger.log: All in! Closing
       - name: EXIT
         transitions:
@@ -221,12 +221,12 @@ sun:
   on_sunrise:
     - elevation: 5°
       then:
-        - logger.log: Good morning! I'll open the huch door!
+        - logger.log: Good morning! I'll open the hutch door!
         - state_machine.transition: TIME_OPEN
 
   on_sunset:
     - elevation: 5°
       then:
-        - logger.log: Good evening! I'll close the huch door!
+        - logger.log: Good evening! I'll close the hutch door!
         - state_machine.transition: TIME_CLOSE
     
