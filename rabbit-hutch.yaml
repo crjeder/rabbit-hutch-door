@@ -198,18 +198,12 @@ binary_sensor:
     direction: UP
     name: "Rabbit has entered the hutch"
     on_press:
-      - number.increment:
-          id: inhabitants
-          cycle: false
       - state_machine.transition: ENTER
 
   - platform: apds9960
     direction: DOWN         # Rabbit exits the hutch
     name: "Rabbit has left the hutch"
     on_press:
-      - number.decrement:
-          id: inhabitants
-          cycle: false
       - state_machine.transition: EXIT
 
 time:
