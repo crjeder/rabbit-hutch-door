@@ -130,7 +130,7 @@ state_machine:
           - WAITING -> WAITING
         on_input: 
           - number.decrement:
-              id: inhabitants
+              id: nr_inhabitants
               cycle: false
                 
 switch:
