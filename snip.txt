@@ -4,12 +4,11 @@
           state_machine.state:
             value: "WAITING"
         then:
-          - logger.log: "Danger! Rabits are not in the hutch at dawn!"
+          - logger.log: "Danger! Rabbits are not in the hutch at dawn!"
           - state_machine.transition: ERROR
         else:
           - if:
             condition:
-              state_machine.state:
-                value: "Error"
+              state_machine.state: "Error"
             then:
               - logger.log: "Danger! Hutch still in error state. Check immediately"

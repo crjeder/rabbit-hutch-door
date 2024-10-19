@@ -9,7 +9,6 @@ on:
 
 jobs:
   build:
-    uses: esphome/workflows/.github/workflows/publish.yml@main
+    uses: esphome/workflows/.github/workflows/build.yml@main
     with:
       files: rabbit-hutch.yaml
-      name: Rabbit Hutch

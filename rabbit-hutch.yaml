@@ -231,4 +231,8 @@ sun:
         - state_machine.transition: TIME_CLOSE
     - elevation: 0°
       then:
-        - logger.log: geht doch
+        if:
+          condition:
+            state_machine.state: "Error"
+          then:
+            - logger.log "Danger! Hutch still in error state. Check immediately"
