@@ -229,4 +229,6 @@ sun:
       then:
         - logger.log: Good evening! I'll close the hutch door!
         - state_machine.transition: TIME_CLOSE
-    
+    - elevation: 0°
+      then:
+        - logger.log: geht doch
